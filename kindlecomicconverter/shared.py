@@ -54,7 +54,7 @@ def getImageFileName(imgfile):
         return None
     if name.startswith('._'):
         return None
-    if ext not in ['.png', '.jpg', '.jpeg', '.gif', '.webp', '.jp2', '.j2k', '.jpx']:
+    if ext not in ['.png', '.jpg', '.jpeg', '.gif', '.webp', '.jp2', '.j2k', '.jpx', '.avif']:
         return None
     return [name, ext]
 

@@ -1,5 +1,6 @@
 PySide6>=6.5.1
 Pillow>=5.2.0
+pillow-avif-plugin
 psutil>=5.9.5
 requests>=2.31.0
 python-slugify>=1.2.1
