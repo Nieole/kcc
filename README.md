@@ -250,7 +250,7 @@ OTHER:
 
 This section is for developers who want to contribute to KCC or power users who want to run the latest code without waiting for an official release.
 
-Easiest to use [GitHub Desktop](https://desktop.github.com) to clone the KCC repo. From GitHub Desktop, click on `Repository` in the toolbar, then `Command Prompt` (Windows)/`Terminal` (Mac) to open a window in the KCC repo.
+Easiest to use [GitHub Desktop](https://desktop.github.com) to clone your fork of the KCC repo. From GitHub Desktop, click on `Repository` in the toolbar, then `Command Prompt` (Windows)/`Terminal` (Mac) to open a window in the KCC repo.
 
 Depending on your system [Python](https://www.python.org) may be called either `python` or `python3`. We use virtual environments (venv) to manage dependencies.
 
@@ -289,6 +289,8 @@ python setup.py build_binary
 ```
 
 ### macOS install from source
+
+If the system installed Python gives you issues, please install the latest Python from either brew or the official website.
 
 One time setup and running for the first time:
 ```
