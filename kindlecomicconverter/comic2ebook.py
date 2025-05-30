@@ -23,6 +23,7 @@ import pathlib
 import re
 import sys
 import pillow_avif
+import unicodedata
 from argparse import ArgumentParser
 from time import perf_counter, strftime, gmtime
 from copy import copy
@@ -985,8 +986,12 @@ def createNewTome(parent):
     os.makedirs(tomePath)
     return tomePath, tomePathRoot
 
+def to_half_width(value: str) -> str:
+    """将字符串中的全角字符转换为半角字符"""
+    return unicodedata.normalize('NFKC', value)
 
 def slugify(value):
+    value = to_half_width(value)  # 全角转半角
     if options.format != 'CBZ':
         value = slugify_ext(value, regex_pattern=r'[^-a-z0-9_\.]+').strip('.')
     value = sub(r'0*([0-9]{4,})', r'\1', sub(r'([0-9]+)', r'0000\1', value, count=2))
