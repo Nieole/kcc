@@ -994,7 +994,8 @@ def slugify(value):
     value = to_half_width(value)  # 全角转半角
     if options.format != 'CBZ':
         value = slugify_ext(value, regex_pattern=r'[^-a-z0-9_\.]+').strip('.')
-    value = sub(r'0*([0-9]{4,})', r'\1', sub(r'([0-9]+)', r'0000\1', value, count=2))
+    # 修改正则表达式以支持小数
+    value = sub(r'0*(\d{4,}(?:\.\d+)?)', r'\1', sub(r'(\d+(?:\.\d+)?)', r'0000\1', value, count=2))
     return value
 
 
