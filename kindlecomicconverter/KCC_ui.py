@@ -3,7 +3,7 @@
 ################################################################################
 ## Form generated from reading UI file 'KCC.ui'
 ##
-## Created by: Qt User Interface Compiler version 6.9.1
+## Created by: Qt User Interface Compiler version 6.9.0
 ##
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
@@ -476,6 +476,7 @@ class Ui_mainWindow(object):
         self.editorButton.setToolTip(QCoreApplication.translate("mainWindow", u"<html><head/><body><p style='white-space:pre'>Shift+Click to edit directory.</p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
         self.editorButton.setText(QCoreApplication.translate("mainWindow", u"\u5143\u6570\u636e\u7f16\u8f91\u5668", None))
+        self.kofiButton.setText(QCoreApplication.translate("mainWindow", u"Support me on Ko-fi", None))
         self.wikiButton.setText(QCoreApplication.translate("mainWindow", u"Wiki\u6587\u6863", None))
 #if QT_CONFIG(tooltip)
         self.directoryButton.setToolTip(QCoreApplication.translate("mainWindow", u"<html><head/><body><p style='white-space:pre'>Add directory containing JPG, PNG or GIF files to queue.<br/><span style=\" font-weight:600;\">CBR, CBZ and CB7 files inside will not be processed!</span></p></body></html>", None))
@@ -576,6 +577,10 @@ class Ui_mainWindow(object):
 #endif // QT_CONFIG(tooltip)
         self.spreadShiftBox.setText(QCoreApplication.translate("mainWindow", u"\u9996\u9875\u504f\u79fb", None))
 #if QT_CONFIG(tooltip)
+        self.fileFusionBox.setToolTip(QCoreApplication.translate("mainWindow", u"<html><head/><body><p>Combines all selected files into a single file. (Helpful for combining chapters into volumes.)</p></body></html>", None))
+#endif // QT_CONFIG(tooltip)
+        self.fileFusionBox.setText(QCoreApplication.translate("mainWindow", u"File Fusion", None))
+#if QT_CONFIG(tooltip)
         self.upscaleBox.setToolTip(QCoreApplication.translate("mainWindow", u"<html><head/><body><p><span style=\" font-weight:600; text-decoration: underline;\">\u672a\u9009\u4e2d - \u4e0d\u8c03\u6574<br/></span>\u5c0f\u4e8e\u8bbe\u5907\u5206\u8fa8\u7387\u7684\u56fe\u7247\u4e0d\u4f1a\u88ab\u8c03\u6574\u5927\u5c0f.</p><p><span style=\" font-weight:600; text-decoration: underline;\">\u534a\u9009 - \u62c9\u4f38<br/></span>\u5c0f\u4e8e\u8bbe\u5907\u5206\u8fa8\u7387\u7684\u56fe\u50cf\u5c06\u88ab\u8c03\u6574\u5927\u5c0f\u3002 \u5bbd\u9ad8\u6bd4\u5c06\u4e0d\u4f1a\u4fdd\u7559\u3002</p><p><span style=\" font-weight:600; text-decoration: underline;\">\u9009\u4e2d - \u7f29\u653e<br/></span>\u5c0f\u4e8e\u8bbe\u5907\u5206\u8fa8\u7387\u7684\u56fe\u50cf\u5c06\u88ab\u8c03\u6574\u5927\u5c0f\u3002 \u5bbd\u9ad8\u6bd4\u5c06\u88ab\u4fdd\u7559\u3002</p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
         self.upscaleBox.setText(QCoreApplication.translate("mainWindow", u"\u62c9\u4f38/\u7f29\u653e", None))
@@ -595,6 +600,10 @@ class Ui_mainWindow(object):
         self.chunkSizeCheckBox.setToolTip(QCoreApplication.translate("mainWindow", u"<html><head/><body><p><span style=\" font-weight:700; text-decoration: underline;\">\u672a\u9009\u4e2d<br/></span>\u6761\u6f2b\u7684\u6700\u5927\u8f93\u51fa\u6587\u4ef6\u5927\u5c0f\u4e3a 100 MB\uff0c\u5176\u4ed6\u6587\u4ef6\u5927\u5c0f\u4e3a 400 MB\u3002</p><p><span style=\" font-weight:700; text-decoration: underline;\">\u9009\u4e2d</span><br/>\u4f7f\u7528 &quot;\u5757\u5c3a\u5bf8\u5927\u5c0f MB&quot; \u5206\u5272\u6587\u4ef6.</p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
         self.chunkSizeCheckBox.setText(QCoreApplication.translate("mainWindow", u"\u5757\u5927\u5c0f", None))
+#if QT_CONFIG(tooltip)
+        self.comicinfoTitleBox.setToolTip(QCoreApplication.translate("mainWindow", u"Write Title from ComicInfo.xml", None))
+#endif // QT_CONFIG(tooltip)
+        self.comicinfoTitleBox.setText(QCoreApplication.translate("mainWindow", u"ComicInfo Title", None))
         self.gammaLabel.setText(QCoreApplication.translate("mainWindow", u"Gamma: Auto", None))
 #if QT_CONFIG(tooltip)
         self.chunkSizeWidget.setToolTip(QCoreApplication.translate("mainWindow", u"<html><head/><body><p>\u8b66\u544a\uff1a\u5757\u5927\u5c0f\u5927\u4e8e\u9ed8\u8ba4\u503c\u53ef\u80fd\u4f1a\u5bfc\u81f4<br/>\u6027\u80fd/\u7535\u6c60\u95ee\u9898\uff0c\u5c24\u5176\u662f\u5728\u65e7\u8bbe\u5907\u4e0a.</p></body></html>", None))
