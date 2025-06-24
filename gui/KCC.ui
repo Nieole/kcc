@@ -74,6 +74,29 @@
         </widget>
        </item>
        <item>
+        <widget class="QPushButton" name="kofiButton">
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>30</height>
+          </size>
+         </property>
+         <property name="text">
+          <string>Support me on Ko-fi</string>
+         </property>
+         <property name="icon">
+          <iconset resource="KCC.qrc">
+           <normaloff>:/Other/icons/kofi_symbol.png</normaloff>:/Other/icons/kofi_symbol.png</iconset>
+         </property>
+         <property name="iconSize">
+          <size>
+           <width>19</width>
+           <height>16</height>
+          </size>
+         </property>
+        </widget>
+       </item>
+       <item>
         <widget class="QPushButton" name="wikiButton">
          <property name="minimumSize">
           <size>
@@ -292,7 +315,7 @@
           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p style='white-space:pre'&gt;Resolution of the target device.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
          <property name="maximum">
-          <number>2160</number>
+          <number>2400</number>
          </property>
         </widget>
        </item>
@@ -590,6 +613,16 @@
          </property>
         </widget>
        </item>
+       <item row="6" column="0">
+        <widget class="QCheckBox" name="fileFusionBox">
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Combines all selected files into a single file. (Helpful for combining chapters into volumes.)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
+         <property name="text">
+          <string>File Fusion</string>
+         </property>
+        </widget>
+       </item>
        <item row="2" column="1">
         <widget class="QCheckBox" name="upscaleBox">
          <property name="toolTip">
@@ -640,6 +673,16 @@
          </property>
          <property name="text">
           <string>块大小</string>
+         </property>
+        </widget>
+       </item>
+       <item row="7" column="0">
+        <widget class="QCheckBox" name="comicinfoTitleBox">
+         <property name="toolTip">
+          <string>Write Title from ComicInfo.xml</string>
+         </property>
+         <property name="text">
+          <string>ComicInfo Title</string>
          </property>
         </widget>
        </item>

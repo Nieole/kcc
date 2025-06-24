@@ -263,10 +263,16 @@ class WorkerThread(QThread):
             options.maximizestrips = True
         if GUI.disableProcessingBox.isChecked():
             options.noprocessing = True
+        if GUI.comicinfoTitleBox.isChecked():
+            options.comicinfotitle = True
         if GUI.deleteBox.isChecked():
             options.delete = True
         if GUI.spreadShiftBox.isChecked():
             options.spreadshift = True
+        if GUI.fileFusionBox.isChecked():
+            options.filefusion = True
+        else:
+            options.filefusion = False
         if GUI.noRotateBox.isChecked():
             options.norotate = True
         if GUI.mozJpegBox.checkState() == Qt.CheckState.PartiallyChecked:
@@ -288,6 +294,19 @@ class WorkerThread(QThread):
             if GUI.jobList.item(i).icon().isNull():
                 currentJobs.append(str(GUI.jobList.item(i).text()))
         GUI.jobList.clear()
+        if options.filefusion:
+            bookDir = []
+            MW.addMessage.emit('Attempting file fusion', 'info', False)
+            for job in currentJobs:
+                bookDir.append(job)
+            try:
+                comic2ebook.options = comic2ebook.checkOptions(copy(options))
+                currentJobs.clear()
+                currentJobs.append(comic2ebook.makeFusion(bookDir))
+                MW.addMessage.emit('Created fusion at ' + currentJobs[0], 'info', False)
+            except Exception as e:
+                print('Fusion Failed. ' + str(e))
+                MW.addMessage.emit('Fusion Failed. ' + str(e), 'error', True)
         for job in currentJobs:
             sleep(0.5)
             if not self.conversionAlive:
@@ -433,6 +452,12 @@ class WorkerThread(QThread):
                                 move(item, GUI.targetDirectory)
                             except Exception:
                                 pass
+        if options.filefusion:
+            for path in currentJobs:
+                if os.path.isfile(path):
+                    os.remove(path)
+                elif os.path.isdir(path):
+                    rmtree(path)
         GUI.progress.content = ''
         GUI.progress.stop()
         MW.hideProgressBar.emit()
@@ -534,6 +559,10 @@ class KCCGUI(KCC_ui.Ui_mainWindow):
         # noinspection PyCallByClass
         QDesktopServices.openUrl(QUrl('https://github.com/ciromattia/kcc/wiki'))
 
+    def openKofi(self):
+        # noinspection PyCallByClass
+        QDesktopServices.openUrl(QUrl('https://ko-fi.com/eink_dude'))
+
     def modeChange(self, mode):
         if mode == 1:
             self.currentMode = 1
@@ -625,7 +654,7 @@ class KCCGUI(KCC_ui.Ui_mainWindow):
     def togglequalityBox(self, value):
         profile = GUI.profiles[str(GUI.deviceBox.currentText())]
         if value == 2:
-            if profile['Label'] == 'KV' or profile['Label'] in image.ProfileData.ProfilesKindlePDOC.keys():
+            if profile['Label'] not in ('K57', 'KPW', 'K810') :
                 self.addMessage('This option is intended for older Kindle models.', 'warning')
                 self.addMessage('On this device, there will be conversion speed and quality issues.', 'warning')
                 self.addMessage('Use the Kindle Scribe profile if you want higher resolution when zooming.', 'warning')
@@ -820,11 +849,13 @@ class KCCGUI(KCC_ui.Ui_mainWindow):
                                            'colorBox': GUI.colorBox.checkState().value,
                                            'reduceRainbowBox': GUI.reduceRainbowBox.checkState().value,
                                            'disableProcessingBox': GUI.disableProcessingBox.checkState().value,
+                                           'comicinfoTitleBox': GUI.comicinfoTitleBox.checkState().value,
                                            'mozJpegBox': GUI.mozJpegBox.checkState().value,
                                            'widthBox': GUI.widthBox.value(),
                                            'heightBox': GUI.heightBox.value(),
                                            'deleteBox': GUI.deleteBox.checkState().value,
                                            'spreadShiftBox': GUI.spreadShiftBox.checkState().value,
+                                           'fileFusionBox': GUI.fileFusionBox.checkState().value,
                                            'noRotateBox': GUI.noRotateBox.checkState().value,
                                            'maximizeStrips': GUI.maximizeStrips.checkState().value,
                                            'gammaSlider': float(self.gammaValue) * 100,
@@ -957,8 +988,10 @@ class KCCGUI(KCC_ui.Ui_mainWindow):
         self.profiles = {
             "Kindle Oasis 9/10": {'PVOptions': True, 'ForceExpert': False, 'DefaultFormat': 0,
                                  'DefaultUpscale': True, 'ForceColor': False, 'Label': 'KO'},
+            "Kindle 8/10": {'PVOptions': True, 'ForceExpert': False, 'DefaultFormat': 0,
+                       'DefaultUpscale': False, 'ForceColor': False, 'Label': 'K810'},
             "Kindle Oasis 8": {'PVOptions': True, 'ForceExpert': False, 'DefaultFormat': 0,
-                             'DefaultUpscale': True, 'ForceColor': False, 'Label': 'KV'},
+                             'DefaultUpscale': True, 'ForceColor': False, 'Label': 'KPW34'},
             "Kindle Voyage": {'PVOptions': True, 'ForceExpert': False, 'DefaultFormat': 0,
                               'DefaultUpscale': True, 'ForceColor': False, 'Label': 'KV'},
             "Kindle Scribe": {
@@ -967,21 +1000,21 @@ class KCCGUI(KCC_ui.Ui_mainWindow):
             "Kindle 11": {
                 'PVOptions': True, 'ForceExpert': False, 'DefaultFormat': 0, 'DefaultUpscale': True, 'ForceColor': False, 'Label': 'K11',
             },
-            "Kindle PW 11": {
+            "Kindle Paperwhite 11": {
                 'PVOptions': True, 'ForceExpert': False, 'DefaultFormat': 0, 'DefaultUpscale': True, 'ForceColor': False, 'Label': 'KPW5',
             },
-            "Kindle PW 12": {
+            "Kindle Paperwhite 12": {
                 'PVOptions': True, 'ForceExpert': False, 'DefaultFormat': 0, 'DefaultUpscale': True, 'ForceColor': False, 'Label': 'KO',
             },
-            "Kindle CS 12": {
+            "Kindle Colorsoft": {
                 'PVOptions': True, 'ForceExpert': False, 'DefaultFormat': 0, 'DefaultUpscale': True, 'ForceColor': True, 'Label': 'KO',
             },
-            "Kindle PW 7/10": {'PVOptions': True, 'ForceExpert': False, 'DefaultFormat': 0,
-                              'DefaultUpscale': True, 'ForceColor': False, 'Label': 'KV'},
-            "Kindle PW 5/6": {'PVOptions': True, 'ForceExpert': False, 'DefaultFormat': 0,
+            "Kindle Paperwhite 7/10": {'PVOptions': True, 'ForceExpert': False, 'DefaultFormat': 0,
+                              'DefaultUpscale': True, 'ForceColor': False, 'Label': 'KPW34'},
+            "Kindle Paperwhite 5/6": {'PVOptions': True, 'ForceExpert': False, 'DefaultFormat': 0,
                               'DefaultUpscale': False, 'ForceColor': False, 'Label': 'KPW'},
-            "Kindle 4/5/7/8/10": {'PVOptions': True, 'ForceExpert': False, 'DefaultFormat': 0,
-                       'DefaultUpscale': False, 'ForceColor': False, 'Label': 'K578'},
+            "Kindle 4/5/7": {'PVOptions': True, 'ForceExpert': False, 'DefaultFormat': 0,
+                       'DefaultUpscale': False, 'ForceColor': False, 'Label': 'K57'},
             "Kindle DX": {'PVOptions': False, 'ForceExpert': False, 'DefaultFormat': 2,
                               'DefaultUpscale': False, 'ForceColor': False, 'Label': 'KDX'},
             "Kobo Mini/Touch": {'PVOptions': False, 'ForceExpert': False, 'DefaultFormat': 1,
@@ -1036,10 +1069,10 @@ class KCCGUI(KCC_ui.Ui_mainWindow):
                       'Label': 'OTHER'},
         }
         profilesGUI = [
-            "Kindle CS 12",
-            "Kindle PW 12",
+            "Kindle Colorsoft",
+            "Kindle Paperwhite 12",
             "Kindle Scribe",
-            "Kindle PW 11",
+            "Kindle Paperwhite 11",
             "Kindle 11",
             "Kindle Oasis 9/10",
             "Separator",
@@ -1057,11 +1090,12 @@ class KCCGUI(KCC_ui.Ui_mainWindow):
             "Separator",
             "Other",
             "Separator",
+            "Kindle 8/10",
             "Kindle Oasis 8",
-            "Kindle PW 7/10",
+            "Kindle Paperwhite 7/10",
             "Kindle Voyage",
-            "Kindle PW 5/6",
-            "Kindle 4/5/7/8/10",
+            "Kindle Paperwhite 5/6",
+            "Kindle 4/5/7",
             "Kindle Touch",
             "Kindle Keyboard",
             "Kindle DX",
@@ -1080,16 +1114,26 @@ class KCCGUI(KCC_ui.Ui_mainWindow):
             "Kobo Mini/Touch",
         ]
 
-        statusBarLabel = QLabel('<b><a href="https://kcc.iosphe.re/">HOMEPAGE</a> - <a href="https://github.'
-                                          'com/ciromattia/kcc/blob/master/README.md#issues--new-features--donations">DO'
-                                          'NATE</a> - <a href="http://www.mobileread.com/forums/showthread.php?t=207461'
-                                          '">FORUM</a></b>')
+        link_dict = {
+            'README': "https://github.com/ciromattia/kcc?tab=readme-ov-file#kcc",
+            'FAQ': "https://github.com/ciromattia/kcc/blob/master/README.md#faq",
+            'YOUTUBE': "https://youtu.be/IR2Fhcm9658?si=Z-2zzLaUFjmaEbrj",
+            'COMMISSIONS': "https://github.com/ciromattia/kcc?tab=readme-ov-file#commissions",
+            'DONATE': "https://github.com/ciromattia/kcc/blob/master/README.md#issues--new-features--donations",
+            'FORUM': "http://www.mobileread.com/forums/showthread.php?t=207461",
+            'DISCORD': "https://discord.com/invite/qj7wpnUHav",
+        }
+
+        link_html_list = [f'<a href="{v}">{k}</a>' for k, v in link_dict.items()]
+        statusBarLabel = QLabel(f'<b>{" - ".join(link_html_list)}</b>')
         statusBarLabel.setAlignment(Qt.AlignmentFlag.AlignCenter)
         statusBarLabel.setOpenExternalLinks(True)
         GUI.statusBar.addPermanentWidget(statusBarLabel, 1)
 
         self.addMessage('<b>Welcome!</b>', 'info')
-        self.addMessage('<b>Remember:</b> All options have additional information in tooltips.', 'info')
+        self.addMessage('<b>Tip:</b> Hover mouse over options to see additional information in tooltips.', 'info')
+        self.addMessage('<b>Tip:</b> You can drag and drop image folders or comic files/archives into this window to convert.', 'info')
+        self.addMessage('<b>Tip:</b> Shift clicking the Convert button lets you select a custom output directory', 'info')
         if self.startNumber < 5:
             self.addMessage('Since you are a new user of <b>KCC</b> please see few '
                             '<a href="https://github.com/ciromattia/kcc/wiki/Important-tips">important tips</a>.',
@@ -1108,6 +1152,7 @@ class KCCGUI(KCC_ui.Ui_mainWindow):
         GUI.fileButton.clicked.connect(self.selectFile)
         GUI.editorButton.clicked.connect(self.selectFileMetaEditor)
         GUI.wikiButton.clicked.connect(self.openWiki)
+        GUI.kofiButton.clicked.connect(self.openKofi)
         GUI.convertButton.clicked.connect(self.convertStart)
         GUI.gammaSlider.valueChanged.connect(self.changeGamma)
         GUI.gammaBox.stateChanged.connect(self.togglegammaBox)

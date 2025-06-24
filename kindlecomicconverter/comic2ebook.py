@@ -30,6 +30,7 @@ from copy import copy
 from glob import glob, escape
 from re import sub
 from stat import S_IWRITE, S_IREAD, S_IEXEC
+from typing import List
 from zipfile import ZipFile, ZIP_STORED, ZIP_DEFLATED
 from tempfile import mkdtemp, gettempdir, TemporaryFile
 from shutil import move, copytree, rmtree, copyfile
@@ -38,6 +39,7 @@ from uuid import uuid4
 from natsort import os_sort_keygen
 from slugify import slugify as slugify_ext
 from PIL import Image, ImageFile
+from pathlib import Path
 from subprocess import STDOUT, PIPE, CalledProcessError
 from psutil import virtual_memory, disk_usage
 from html import escape as hescape
@@ -79,7 +81,7 @@ def main(argv=None):
     return 0
 
 
-def buildHTML(path, imgfile, imgfilepath):
+def buildHTML(path, imgfile, imgfilepath, imgfile2=None):
     key = pathlib.Path(imgfilepath).name
     filename = getImageFileName(imgfile)
     deviceres = options.profileData[1]
@@ -105,10 +107,13 @@ def buildHTML(path, imgfile, imgfilepath):
         os.makedirs(htmlpath)
     htmlfile = os.path.join(htmlpath, filename[0] + '.xhtml')
     imgsize = Image.open(os.path.join(head, "Images", postfix, imgfile)).size
+    imgsizeframe = list(imgsize)
+    imgsize2 = (0, 0)
+    if imgfile2:
+        imgsize2 = Image.open(os.path.join(head, "Images", postfix, imgfile2)).size
+    imgsizeframe[1] += imgsize2[1]
     if options.hq:
-        imgsizeframe = (int(imgsize[0] // 1.5), int(imgsize[1] // 1.5))
-    else:
-        imgsizeframe = imgsize
+        imgsizeframe = (int(imgsizeframe[0] // 1.5), int(imgsizeframe[1] // 1.5))
     f = open(htmlfile, "w", encoding='UTF-8')
     f.writelines(["<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n",
                   "<!DOCTYPE html>\n",
@@ -117,14 +122,17 @@ def buildHTML(path, imgfile, imgfilepath):
                   "<title>", hescape(filename[0]), "</title>\n",
                   "<link href=\"", "../" * (backref - 1), "style.css\" type=\"text/css\" rel=\"stylesheet\"/>\n",
                   "<meta name=\"viewport\" "
-                  "content=\"width=" + str(imgsize[0]) + ", height=" + str(imgsize[1]) + "\"/>\n"
+                  "content=\"width=" + str(imgsizeframe[0]) + ", height=" + str(imgsizeframe[1]) + "\"/>\n"
                   "</head>\n",
                   "<body style=\"" + additionalStyle + "\">\n",
                   "<div style=\"text-align:center;top:" + getTopMargin(deviceres, imgsizeframe) + "%;\">\n",
                   # this display none div fixes formatting issues with virtual panel mode, for some reason
                   '<div style="display:none;">.</div>\n',
-                  "<img width=\"" + str(imgsizeframe[0]) + "\" height=\"" + str(imgsizeframe[1]) + "\" ",
-                  "src=\"", "../" * backref, "Images/", postfix, imgfile, "\"/>\n</div>\n"])
+    ])
+    f.write(f'<img width="{imgsize[0]}" height="{imgsize[1]}" src="{"../" * backref}Images/{postfix}{imgfile}"/>\n')
+    if imgfile2:
+        f.write(f'<img width="{imgsize2[0]}" height="{imgsize2[1]}" src="{"../" * backref}Images/{postfix}{imgfile2}"/>\n')
+    f.write("</div>\n")
     if options.iskindle and options.panelview:
         if options.autoscale:
             size = (getPanelViewResolution(imgsize, deviceres))
@@ -316,12 +324,8 @@ def buildOPF(dstdir, title, filelist, cover=None):
                   "<item id=\"nav\" href=\"nav.xhtml\" ",
                   "properties=\"nav\" media-type=\"application/xhtml+xml\"/>\n"])
     if cover is not None:
-        filename = getImageFileName(cover.replace(os.path.join(dstdir, 'OEBPS'), '').lstrip('/').lstrip('\\\\'))
-        if '.png' == filename[1]:
-            mt = 'image/png'
-        else:
-            mt = 'image/jpeg'
-        f.write("<item id=\"cover\" href=\"Images/cover" + filename[1] + "\" media-type=\"" + mt +
+        mt = 'image/jpeg'
+        f.write("<item id=\"cover\" href=\"Images/cover.jpg" + "\" media-type=\"" + mt +
                 "\" properties=\"cover-image\"/>\n")
     reflist = []
     for path in filelist:
@@ -338,6 +342,10 @@ def buildOPF(dstdir, title, filelist, cover=None):
             mt = 'image/jpeg'
         f.write("<item id=\"img_" + str(uniqueid) + "\" href=\"" + folder + "/" + path[1] + "\" media-type=\"" +
                 mt + "\"/>\n")
+        if 'above' in path[1]:
+            bottom = path[1].replace('above', 'below')
+            uniqueid = uniqueid.replace('above', 'below')
+            f.write("<item id=\"img_" + str(uniqueid) + "\" href=\"" + folder + "/" + bottom + "\" media-type=\"" + mt + "\"/>\n")
     f.write("<item id=\"css\" href=\"Text/style.css\" media-type=\"text/css\"/>\n")
 
 
@@ -360,63 +368,63 @@ def buildOPF(dstdir, title, filelist, cover=None):
             pageside = "left"
         else:
             pageside = "right"
+
+    # initial spread order forwards
+    page_spread_property_list = []
     for entry in reflist:
         if options.righttoleft:
-            if entry.endswith("-kcc-a"):
-                f.write(
-                    "<itemref idref=\"page_%s\" %s/>\n" % (entry,
-                                                            pageSpreadProperty("center"))
-                )
+            if "-kcc-a" in entry or "-kcc-d" in entry:
+                page_spread_property_list.append("center")
                 pageside = "right"
-            elif entry.endswith("-kcc-b"):
-                f.write(
-                    "<itemref idref=\"page_%s\" %s/>\n" % (entry,
-                                                            pageSpreadProperty("right"))
-                )
+            elif "-kcc-b" in entry:
+                page_spread_property_list.append("right")
                 pageside = "right"
-            elif entry.endswith("-kcc-c"):
-                f.write(
-                    "<itemref idref=\"page_%s\" %s/>\n" % (entry,
-                                                            pageSpreadProperty("left"))
-                )
+            elif "-kcc-c" in entry:
+                page_spread_property_list.append("left")
                 pageside = "right"
             else:
-                f.write(
-                    "<itemref idref=\"page_%s\" %s/>\n" % (entry,
-                                                            pageSpreadProperty(pageside))
-                )
+                page_spread_property_list.append(pageside)
                 if pageside == "right":
                     pageside = "left"
                 else:
                     pageside = "right"
         else:
-            if entry.endswith("-kcc-a"):
-                f.write(
-                    "<itemref idref=\"page_%s\" %s/>\n" % (entry,
-                                                            pageSpreadProperty("center"))
-                )
+            if "-kcc-a" in entry or "-kcc-d" in entry:
+                page_spread_property_list.append("center")
                 pageside = "left"
-            elif entry.endswith("-kcc-b"):
-                f.write(
-                    "<itemref idref=\"page_%s\" %s/>\n" % (entry,
-                                                            pageSpreadProperty("left"))
-                )
+            elif "-kcc-b" in entry:
+                page_spread_property_list.append("left")
                 pageside = "left"
-            elif entry.endswith("-kcc-c"):
-                f.write(
-                    "<itemref idref=\"page_%s\" %s/>\n" % (entry,
-                                                            pageSpreadProperty("right"))
-                )
+            elif "-kcc-c" in entry:
+                page_spread_property_list.append("right")
                 pageside = "left"
             else:
-                f.write(
-                    "<itemref idref=\"page_%s\" %s/>\n" % (entry,
-                                                            pageSpreadProperty(pageside))
-                )
+                page_spread_property_list.append(pageside)
                 if pageside == "right":
                     pageside = "left"
                 else:
                     pageside = "right"
+
+    # fix spread orders backward
+    spread_seen = False
+    for i in range(len(reflist) -1, -1, -1):
+        entry = reflist[i]
+        if "-kcc-x" not in entry:
+            spread_seen = True
+            if options.righttoleft:
+                pageside = "left"
+            else:
+                pageside = "right"
+        elif spread_seen:
+            page_spread_property_list[i] = pageside
+            if pageside == "right":
+                pageside = "left"
+            else:
+                pageside = "right"
+
+    for entry, prop in zip(reflist, page_spread_property_list):
+        f.write(f'<itemref idref="page_{entry}" {pageSpreadProperty(prop)}/>\n')
+
     f.write("</spine>\n</package>\n")
     f.close()
     os.mkdir(os.path.join(dstdir, 'META-INF'))
@@ -429,10 +437,9 @@ def buildOPF(dstdir, title, filelist, cover=None):
                   "</container>"])
     f.close()
 
-def buildEPUB(path, chapternames, tomenumber, ischunked):
+def buildEPUB(path, chapternames, tomenumber, ischunked, cover: image.Cover, len_tomes=0):
     filelist = []
     chapterlist = []
-    cover = None
     os.mkdir(os.path.join(path, 'OEBPS', 'Text'))
     f = open(os.path.join(path, 'OEBPS', 'Text', 'style.css'), 'w', encoding='UTF-8')
     f.writelines(["@page {\n",
@@ -442,7 +449,14 @@ def buildEPUB(path, chapternames, tomenumber, ischunked):
                   "display: block;\n",
                   "margin: 0;\n",
                   "padding: 0;\n",
-                  "}\n"])
+                  "}\n",
+                  ])
+    if options.kindle_scribe_azw3:
+        f.writelines([
+                    "img {\n",
+                    "display: block;\n",
+                    "}\n",
+                    ])
     if options.iskindle and options.panelview:
         f.writelines(["#PV {\n",
                       "position: absolute;\n",
@@ -510,22 +524,24 @@ def buildEPUB(path, chapternames, tomenumber, ischunked):
                       "}\n"])
     f.close()
     build_html_start = perf_counter()
+    cover.save_to_epub(os.path.join(path, 'OEBPS', 'Images', 'cover.jpg'), tomenumber, len_tomes)
+    options.covers.append((cover, options.uuid))
     for dirpath, dirnames, filenames in os.walk(os.path.join(path, 'OEBPS', 'Images')):
         chapter = False
         dirnames, filenames = walkSort(dirnames, filenames)
         for afile in filenames:
-            if cover is None:
-                try:
-                    cover = os.path.join(os.path.join(path, 'OEBPS', 'Images'),
-                                        'cover' + getImageFileName(afile)[1])
-                except Exception as e:
-                    raise UserWarning(f"{afile}: {e}")
-                options.covers.append((image.Cover(os.path.join(dirpath, afile), cover, options,
-                                                   tomenumber), options.uuid))
+            if afile == 'cover.jpg':
+                continue
+            if 'below' in afile:
+                continue
             if not chapter:
                 chapterlist.append((dirpath.replace('Images', 'Text'), afile))
                 chapter = True
-            filelist.append(buildHTML(dirpath, afile, os.path.join(dirpath, afile)))
+            if 'above' in afile:
+                bottom = afile.replace('above', 'below')
+                filelist.append(buildHTML(dirpath, afile, os.path.join(dirpath, afile), bottom))
+            else:
+                filelist.append(buildHTML(dirpath, afile, os.path.join(dirpath, afile)))
     build_html_end = perf_counter()
     print(f"buildHTML: {build_html_end - build_html_start} seconds")
     # Overwrite chapternames if tree is flat and ComicInfo.xml has bookmarks
@@ -631,8 +647,12 @@ def imgFileProcessing(work):
             img.autocontrastImage()
             img.resizeImage()
             img.optimizeForDisplay(opt.reducerainbow)
-            if opt.forcepng and not opt.forcecolor:
+            if opt.forcecolor and workImg.color:
+                pass
+            elif opt.forcepng:
                 img.quantizeImage()
+            else:
+                img.convertToGrayscale()
             output.append(img.saveToDir())
         return output
     except Exception:
@@ -750,7 +770,9 @@ def getComicInfo(path, originalpath):
         except Exception:
             os.remove(xmlPath)
             return
-        if defaultTitle:
+        if options.comicinfotitle:
+            options.title = xml.data['Title']
+        elif defaultTitle:
             if xml.data['Series']:
                 options.title = xml.data['Series']
             if xml.data['Volume']:
@@ -803,6 +825,7 @@ def getPanelViewSize(deviceres, size):
 def sanitizeTree(filetree):
     chapterNames = {}
     page = 1
+    cover_path = None
     for root, dirs, files in os.walk(filetree):
         dirs.sort(key=OS_SORT_KEY)
         files.sort(key=OS_SORT_KEY)
@@ -817,6 +840,8 @@ def sanitizeTree(filetree):
             key = os.path.join(root, name)
             if key != newKey:
                 os.replace(key, newKey)
+            if not cover_path:
+                cover_path = newKey
         for i, name in enumerate(dirs):
             tmpName = name
             slugified = slugify(name)
@@ -828,7 +853,7 @@ def sanitizeTree(filetree):
             if key != newKey:
                 os.replace(key, newKey)
                 dirs[i] = newKey
-    return chapterNames
+    return chapterNames, cover_path
 
 
 def flattenTree(filetree):
@@ -906,8 +931,12 @@ def chunk_process(path, mode, parent):
     if mode < 3:
         for root, dirs, files in walkLevel(path, 0):
             for name in files if mode == 1 else dirs:
+                size = 0
                 if mode == 1:
-                    size = os.path.getsize(os.path.join(root, name))
+                    if 'below' not in name:
+                        size = os.path.getsize(os.path.join(root, name))
+                        if 'above' in name:
+                            size += os.path.getsize(os.path.join(root, name.replace('above', 'below')))
                 else:
                     size = getDirectorySize(os.path.join(root, name))
                 if currentSize + size > targetSize:
@@ -937,7 +966,7 @@ def detectSuboptimalProcessing(tmppath, orgpath):
     for root, _, files in os.walk(tmppath, False):
         for name in files:
             if getImageFileName(name) is not None:
-                if not alreadyProcessed and getImageFileName(name)[0].endswith('-kcc'):
+                if not alreadyProcessed and  '-kcc' in getImageFileName(name)[0]:
                     alreadyProcessed = True
                 path = os.path.join(root, name)
                 pathOrg = orgpath + path.split('OEBPS' + os.path.sep + 'Images')[1]
@@ -1056,6 +1085,8 @@ def makeParser():
                                 help="Output generated file to specified directory or file")
     output_options.add_argument("-t", "--title", action="store", dest="title", default="defaulttitle",
                                 help="Comic title [Default=filename or directory name]")
+    output_options.add_argument("--comicinfotitle", action="store_true", dest="comicinfotitle", default=False,
+                                help="Write Title from ComicInfo.xml")
     output_options.add_argument("-a", "--author", action="store", dest="author", default="defaultauthor",
                                 help="Author name [Default=KCC]")
     output_options.add_argument("-f", "--format", action="store", dest="format", default="Auto",
@@ -1234,6 +1265,40 @@ def checkPre(source):
         raise UserWarning("Target directory is not writable.")
 
 
+def makeFusion(sources: List[str]):
+    if len(sources) < 2:
+        raise UserWarning('Fusion requires at least 2 sources. Did you forget to uncheck fusion?')
+    start = perf_counter()
+    first_path = Path(sources[0])
+    if first_path.is_file():
+        fusion_path = first_path.parent.joinpath(first_path.stem + ' [fused]')
+    else:
+        fusion_path = first_path.parent.joinpath(first_path.name + ' [fused]')
+    print("Running Fusion")
+
+    for source in sources:
+        print(f"Processing {source}...")
+        checkPre(source)
+        print("Checking images...")
+        path = getWorkFolder(source)
+        pathfinder = os.path.join(path, "OEBPS", "Images")
+        sanitizeTree(pathfinder)
+        # TODO: remove flattenTree when subchapters are supported
+        flattenTree(pathfinder)
+        source_path = Path(source)
+        if source_path.is_file():
+            os.renames(pathfinder, fusion_path.joinpath(source_path.stem))
+        else:
+            os.renames(pathfinder, fusion_path.joinpath(source_path.name))
+
+
+    end = perf_counter()
+    print(f"makefusion: {end - start} seconds")
+    print("Combined File: "+ str(fusion_path))
+
+    return str(fusion_path)
+
+
 def makeBook(source, qtgui=None):
     start = perf_counter()
     global GUI
@@ -1242,13 +1307,16 @@ def makeBook(source, qtgui=None):
         GUI.progressBarTick.emit('1')
     else:
         checkTools(source)
+    options.kindle_scribe_azw3 = options.profile == 'KS' and ('MOBI' in options.format or 'EPUB' in options.format)
     checkPre(source)
     print("Preparing source images...")
     path = getWorkFolder(source)
     print("Checking images...")
     getComicInfo(os.path.join(path, "OEBPS", "Images"), source)
     detectSuboptimalProcessing(os.path.join(path, "OEBPS", "Images"), source)
-    chapterNames = sanitizeTree(os.path.join(path, 'OEBPS', 'Images'))
+    chapterNames, cover_path = sanitizeTree(os.path.join(path, 'OEBPS', 'Images'))
+    cover = image.Cover(cover_path, options)
+
     if options.webtoon:
         y = image.ProfileData.Profiles[options.profile][1][1]
         comic2panel.main(['-y ' + str(y), '-i', '-m', path], qtgui)
@@ -1294,10 +1362,10 @@ def makeBook(source, qtgui=None):
         else:
             print("Creating EPUB file...")
             if len(tomes) > 1:
-                buildEPUB(tome, chapterNames, tomeNumber, True)
+                buildEPUB(tome, chapterNames, tomeNumber, True, cover, len(tomes))
                 filepath.append(getOutputFilename(source, options.output, '.epub', ' ' + str(tomeNumber)))
             else:
-                buildEPUB(tome, chapterNames, tomeNumber, False)
+                buildEPUB(tome, chapterNames, tomeNumber, False, cover)
                 filepath.append(getOutputFilename(source, options.output, '.epub', ''))
             makeZIP(tome + '_comic', tome, True)
         copyfile(tome + '_comic.zip', filepath[-1])
@@ -1390,7 +1458,9 @@ def makeMOBIWorker(item):
             if kindlegenErrorCode > 0:
                 break
             if ":I1036: Mobi file built successfully" in line:
-                break
+                return [0, '', item]
+            if ":I1037: Mobi file built with WARNINGS!" in line:
+                return [0, '', item]
         # ERROR: KCC unknown generic error
         if kindlegenErrorCode == 0:
             kindlegenErrorCode = err.returncode
