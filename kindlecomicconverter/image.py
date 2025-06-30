@@ -325,8 +325,12 @@ class ComicPage:
     def save_with_codec(self, image, targetPath):
         if self.opt.forcepng:
             image.info["transparency"] = None
-            targetPath += '.png'
-            image.save(targetPath, 'PNG', optimize=1)
+            if self.opt.iskindle and ('MOBI' in self.opt.format or 'EPUB' in self.opt.format):
+                targetPath += '.gif'
+                image.save(targetPath, 'GIF', optimize=1, interlace=False)
+            else:
+                targetPath += '.png'
+                image.save(targetPath, 'PNG', optimize=1)
         else:
             targetPath += '.jpg'
             if self.opt.mozjpeg:
@@ -355,6 +359,10 @@ class ComicPage:
         self.image = self.image.convert('L')
 
     def quantizeImage(self):
+        # remove all color pixels from image, since colorCheck() has some tolerance
+        # quantize with a small number of color pixels in a mostly b/w image can have unexpected results
+        self.image = self.image.convert("L").convert("RGB")
+
         palImg = Image.new('P', (1, 1))
         palImg.putpalette(self.palette)
         self.image = self.image.quantize(palette=palImg)
