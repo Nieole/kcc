@@ -154,7 +154,7 @@
           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p style='white-space:pre'&gt;Shift+Click to select the output directory for this list.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
          <property name="text">
-          <string>Convert</string>
+          <string>转换</string>
          </property>
          <property name="icon">
           <iconset resource="KCC.qrc">
@@ -171,7 +171,7 @@
           </size>
          </property>
          <property name="text">
-          <string>Clear list</string>
+          <string>清空列表</string>
          </property>
          <property name="icon">
           <iconset resource="KCC.qrc">
@@ -204,7 +204,7 @@
           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p style='white-space:pre'&gt;Add CBR, CBZ, CB7 or PDF file to queue.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
          <property name="text">
-          <string>Add file(s)</string>
+          <string>添加文件</string>
          </property>
          <property name="icon">
           <iconset resource="KCC.qrc">
@@ -244,7 +244,7 @@
           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600; text-decoration: underline;&quot;&gt;Unchecked - next to source&lt;br/&gt;&lt;/span&gt;Place output files next to source files&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600; text-decoration: underline;&quot;&gt;Indeterminate - folder next to source&lt;br/&gt;&lt;/span&gt;Place output files in a folder next to source files&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600; text-decoration: underline;&quot;&gt;Checked - Custom&lt;br/&gt;&lt;/span&gt;Place output files in custom directory specified by right button&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
          <property name="text">
-          <string>Output Folder</string>
+          <string>输出文件夹</string>
          </property>
          <property name="tristate">
           <bool>true</bool>
