@@ -254,6 +254,7 @@ OUTPUT SETTINGS:
                         Split output into multiple files. 0: Don't split 1: Automatic mode 2: Consider every subdirectory as separate volume [Default=0]
   --spreadshift         Shift first page to opposite side in landscape for two page spread alignment
   --norotate            Do not rotate double page spreads in spread splitter option.
+  --rotatefirst         Put rotated spread first in spread splitter option.
   --reducerainbow       Reduce rainbow effect on color eink by slightly blurring images
 
 CUSTOM PROFILE:
@@ -300,6 +301,8 @@ If you want to edit the `.ui` files, use `pyside6-designer` which is included in
 Then use the `gen_ui_files` scripts to autogenerate the python UI.
 
 An example PR adding a new checkbox is here: https://github.com/ciromattia/kcc/pull/785
+
+video of adding a new checkbox: https://youtu.be/g3I8DU74C7g
 
 Do not use `git merge` to merge master from upstream, 
 use the "Sync fork" button on your fork on GitHub in your branch 
