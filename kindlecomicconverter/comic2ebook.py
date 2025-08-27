@@ -22,7 +22,6 @@ import os
 import pathlib
 import re
 import sys
-import pillow_avif
 import unicodedata
 from argparse import ArgumentParser
 from time import perf_counter, strftime, gmtime
