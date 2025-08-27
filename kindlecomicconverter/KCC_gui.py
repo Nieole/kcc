@@ -587,10 +587,6 @@ class KCCGUI(KCC_ui.Ui_mainWindow):
         # noinspection PyCallByClass
         QDesktopServices.openUrl(QUrl('https://github.com/ciromattia/kcc/wiki'))
 
-    def openKofi(self):
-        # noinspection PyCallByClass
-        QDesktopServices.openUrl(QUrl('https://ko-fi.com/eink_dude'))
-
     def modeChange(self, mode):
         if mode == 1:
             self.currentMode = 1
@@ -1190,7 +1186,6 @@ class KCCGUI(KCC_ui.Ui_mainWindow):
         GUI.fileButton.clicked.connect(self.selectFile)
         GUI.editorButton.clicked.connect(self.selectFileMetaEditor)
         GUI.wikiButton.clicked.connect(self.openWiki)
-        GUI.kofiButton.clicked.connect(self.openKofi)
         GUI.convertButton.clicked.connect(self.convertStart)
         GUI.gammaSlider.valueChanged.connect(self.changeGamma)
         GUI.gammaBox.stateChanged.connect(self.togglegammaBox)
