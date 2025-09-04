@@ -294,7 +294,7 @@ class ComicPage:
         cb_spread = cb_nonzero[-1] - cb_nonzero[0] if len(cb_nonzero) else 0
         cr_spread = cr_nonzero[-1] - cr_nonzero[0] if len(cr_nonzero) else 0
 
-        SPREAD_THRESHOLD=20
+        SPREAD_THRESHOLD = 50
         if cb_spread < SPREAD_THRESHOLD and cr_spread < SPREAD_THRESHOLD:
             return False
         else:
@@ -495,9 +495,6 @@ class Cover:
                     stroke_width=25
                 )
                 copy.save(target, "JPEG", optimize=1, quality=85)
-            dot_cover = Path(target).with_stem('._' + Path(target).stem)
-            if os.path.exists(dot_cover):
-                os.remove(dot_cover)
         except IOError:
             raise RuntimeError('Failed to save cover.')
 
