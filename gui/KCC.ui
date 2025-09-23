@@ -24,6 +24,12 @@
     </property>
     <item row="2" column="0" colspan="2">
      <widget class="QListWidget" name="jobList">
+      <property name="minimumSize">
+       <size>
+        <width>0</width>
+        <height>150</height>
+       </size>
+      </property>
       <property name="styleSheet">
        <string notr="true"/>
       </property>
