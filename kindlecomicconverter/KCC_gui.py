@@ -177,30 +177,31 @@ class VersionThread(QThread):
             pass
         
         try:
-            announcements = requests.get('https://api.github.com/repos/axu2/kcc-messages/contents/links.json',
-                                       headers={
-                                           'Accept': 'application/vnd.github.raw+json',
-                                           'X-GitHub-Api-Version': '2022-11-28'}).json()
-            for category, payloads in announcements.items():
-                for payload in payloads:
-                    expiration = datetime.fromisoformat(payload['expiration'])
-                    if expiration < datetime.now(timezone.utc):
-                        continue
-                    delta = expiration - datetime.now(timezone.utc)
-                    time_left = f"{delta.days} day(s) left"
-                    icon = 'info'
-                    if category == 'humbleBundles':
-                        icon = 'bindle'
-                    if category == 'kofi':
-                        icon = 'kofi'
-                    message = f"<b>{payload.get('name')}</b>"
-                    if payload.get('link'):
-                        message = '<a href="{}"><b>{}</b></a>'.format(payload.get('link'), payload.get('name'))
-                    if payload.get('showDeadline'):
-                        message += f': {time_left}'
-                    if category == 'humbleBundles':
-                        message += ' [referral]'
-                    MW.addMessage.emit(message, icon , False)
+            announcements = {}
+            # announcements = requests.get('https://api.github.com/repos/axu2/kcc-messages/contents/links.json',
+            #                            headers={
+            #                                'Accept': 'application/vnd.github.raw+json',
+            #                                'X-GitHub-Api-Version': '2022-11-28'}).json()
+            # for category, payloads in announcements.items():
+            #     for payload in payloads:
+            #         expiration = datetime.fromisoformat(payload['expiration'])
+            #         if expiration < datetime.now(timezone.utc):
+            #             continue
+            #         delta = expiration - datetime.now(timezone.utc)
+            #         time_left = f"{delta.days} day(s) left"
+            #         icon = 'info'
+            #         if category == 'humbleBundles':
+            #             icon = 'bindle'
+            #         if category == 'kofi':
+            #             icon = 'kofi'
+            #         message = f"<b>{payload.get('name')}</b>"
+            #         if payload.get('link'):
+            #             message = '<a href="{}"><b>{}</b></a>'.format(payload.get('link'), payload.get('name'))
+            #         if payload.get('showDeadline'):
+            #             message += f': {time_left}'
+            #         if category == 'humbleBundles':
+            #             message += ' [referral]'
+            #         MW.addMessage.emit(message, icon , False)
         except Exception as e:
             print(e)
 
