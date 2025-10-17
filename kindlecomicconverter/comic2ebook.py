@@ -554,11 +554,11 @@ def buildEPUB(path, chapternames, tomenumber, ischunked, cover: image.Cover, ori
                 filelist.append(buildHTML(dirpath, afile, os.path.join(dirpath, afile)))
     build_html_end = perf_counter()
     print(f"buildHTML: {build_html_end - build_html_start} seconds")
-    # Overwrite chapternames if tree is flat and ComicInfo.xml has bookmarks
+    # Overwrite chapternames if ComicInfo.xml has bookmarks
     if ischunked:
        options.comicinfo_chapters = []
-    
-    if not chapternames and options.comicinfo_chapters:
+
+    if options.comicinfo_chapters:
         chapterlist = []
 
         global_diff = 0
@@ -651,7 +651,7 @@ def imgDirectoryProcessing(path):
             raise RuntimeError("One of workers crashed. Cause: " + workerOutput[0][0], workerOutput[0][1])
     else:
         rmtree(os.path.join(path, '..', '..'), True)
-        raise UserWarning("Source directory is empty.")
+        raise UserWarning("C2E: Source directory is empty.")
 
 
 def imgFileProcessingTick(output):
@@ -959,15 +959,17 @@ def getMetadata(path, originalpath):
         except Exception:
             os.remove(xmlPath)
             return
-        if options.metadatatitle:
+        if options.metadatatitle == 2:
             options.title = xml.data['Title']
         elif defaultTitle:
             if xml.data['Series']:
                 options.title = xml.data['Series']
             if xml.data['Volume']:
-                titleSuffix += ' V' + xml.data['Volume'].zfill(2)
+                titleSuffix += ' Vol. ' + xml.data['Volume'].zfill(2)
             if xml.data['Number']:
                 titleSuffix += ' #' + xml.data['Number'].zfill(3)
+            if options.metadatatitle == 1 and xml.data['Title']:
+                titleSuffix += ': ' + xml.data['Title']
             options.title += titleSuffix
         if defaultAuthor:    
             options.authors = []
@@ -1295,8 +1297,9 @@ def makeParser():
                                 help="Output generated file to specified directory or file")
     output_options.add_argument("-t", "--title", action="store", dest="title", default="defaulttitle",
                                 help="Comic title [Default=filename or directory name]")
-    output_options.add_argument("--metadatatitle", action="store_true", dest="metadatatitle", default=False,
-                                help="Write Title from ComicInfo.xml or other embedded metadata")
+    output_options.add_argument("--metadatatitle", type=int, dest="metadatatitle", default=0,
+                                help="Write title using ComicInfo.xml or other embedded metadata. 1: Combine Title with default schema "
+                                     "2: Use Title only")
     output_options.add_argument("-a", "--author", action="store", dest="author", default="defaultauthor",
                                 help="Author name [Default=KCC]")
     output_options.add_argument("-f", "--format", action="store", dest="format", default="Auto",
@@ -1315,7 +1318,7 @@ def makeParser():
                                 help="Put rotated 2 page spread first in spread splitter option.")
 
     processing_options.add_argument("-n", "--noprocessing", action="store_true", dest="noprocessing", default=False,
-                                    help="Do not modify image and ignore any profil or processing option")
+                                    help="Do not modify image and ignore any profile or processing option")
     processing_options.add_argument("-u", "--upscale", action="store_true", dest="upscale", default=False,
                                     help="Resize images smaller than device's resolution")
     processing_options.add_argument("-s", "--stretch", action="store_true", dest="stretch", default=False,

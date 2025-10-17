@@ -22,7 +22,7 @@ import itertools
 from pathlib import Path
 from PySide6.QtCore import (QSize, QUrl, Qt, Signal, QIODeviceBase, QEvent, QThread, QSettings)
 from PySide6.QtGui import (QColor, QIcon, QPixmap, QDesktopServices)
-from PySide6.QtWidgets import (QApplication, QLabel, QListWidgetItem, QMainWindow, QApplication, QSystemTrayIcon, QFileDialog, QMessageBox, QDialog)
+from PySide6.QtWidgets import (QApplication, QLabel, QListWidgetItem, QMainWindow, QSystemTrayIcon, QFileDialog, QMessageBox, QDialog)
 from PySide6.QtNetwork import (QLocalSocket, QLocalServer)
 
 import os
@@ -322,8 +322,10 @@ class WorkerThread(QThread):
             options.maximizestrips = True
         if GUI.disableProcessingBox.isChecked():
             options.noprocessing = True
-        if GUI.metadataTitleBox.isChecked():
-            options.metadatatitle = True
+        if GUI.metadataTitleBox.checkState() == Qt.CheckState.PartiallyChecked:
+            options.metadatatitle = 1
+        elif GUI.metadataTitleBox.checkState() == Qt.CheckState.Checked:
+            options.metadatatitle = 2
         if GUI.deleteBox.isChecked():
             options.delete = True
         if GUI.spreadShiftBox.isChecked():
@@ -345,6 +347,8 @@ class WorkerThread(QThread):
             options.customheight = str(GUI.heightBox.value())
         if GUI.targetDirectory != '':
             options.output = GUI.targetDirectory
+        if GUI.titleEdit.text():
+            options.title = str(GUI.titleEdit.text())
         if GUI.authorEdit.text():
             options.author = str(GUI.authorEdit.text())
         if GUI.chunkSizeCheckBox.isChecked():
@@ -368,6 +372,11 @@ class WorkerThread(QThread):
             except Exception as e:
                 print('Fusion Failed. ' + str(e))
                 MW.addMessage.emit('Fusion Failed. ' + str(e), 'error', True)
+        elif len(currentJobs) > 1 and options.title != 'defaulttitle':
+            currentJobs.clear()
+            error_message = 'Process Failed. Custom title can\'t be set when processing more than 1 source.\nDid you forget to check fusion?'
+            print(error_message)
+            MW.addMessage.emit(error_message, 'error', True)
         for job in currentJobs:
             sleep(0.5)
             if not self.conversionAlive:
@@ -599,31 +608,26 @@ class KCCGUI(KCC_ui.Ui_mainWindow):
                 GUI.jobList.addItem(fname)
                 GUI.jobList.scrollToBottom()
 
-    def selectFileMetaEditor(self):
-        sname = ''
-        if QApplication.keyboardModifiers() == Qt.ShiftModifier:
-            dname = QFileDialog.getExistingDirectory(MW, 'Select directory', self.lastPath)
-            if dname != '':
-                sname = os.path.join(dname, 'ComicInfo.xml')
-                if sys.platform.startswith('win'):
-                    sname = sname.replace('/', '\\')
-                self.lastPath = os.path.abspath(sname)
-        else:
-            if self.sevenzip:
-                fname = QFileDialog.getOpenFileName(MW, 'Select file', self.lastPath,
-                                                              'Comic (*.cbz *.cbr *.cb7)')
+    def selectFileMetaEditor(self, sname):
+        if not sname:
+            if QApplication.keyboardModifiers() == Qt.ShiftModifier:
+                dname = QFileDialog.getExistingDirectory(MW, 'Select directory', self.lastPath)
+                if dname != '':
+                    sname = os.path.join(dname, 'ComicInfo.xml')
+                    self.lastPath = os.path.dirname(sname)
             else:
-                fname = ['']
-                self.showDialog("Editor is disabled due to a lack of 7z.", 'error')
-                self.addMessage('<a href="https://github.com/ciromattia/kcc#7-zip">Install 7z (link)</a>'
-                ' to enable metadata editing.', 'warning')
-            if fname[0] != '':
-                if sys.platform.startswith('win'):
-                    sname = fname[0].replace('/', '\\')
+                if self.sevenzip:
+                    fname = QFileDialog.getOpenFileName(MW, 'Select file', self.lastPath,
+                                                                  'Comic (*.cbz *.cbr *.cb7)')
                 else:
+                    fname = ['']
+                    self.showDialog("Editor is disabled due to a lack of 7z.", 'error')
+                    self.addMessage('<a href="https://github.com/ciromattia/kcc#7-zip">Install 7z (link)</a>'
+                    ' to enable metadata editing.', 'warning')
+                if fname[0] != '':
                     sname = fname[0]
-                self.lastPath = os.path.abspath(os.path.join(sname, os.pardir))
-        if sname != '':
+                    self.lastPath = os.path.abspath(os.path.join(sname, os.pardir))
+        if sname:
             try:
                 self.editor.loadData(sname)
             except Exception as err:
@@ -744,6 +748,28 @@ class KCCGUI(KCC_ui.Ui_mainWindow):
     
     def togglechunkSizeCheckBox(self, value):
         GUI.chunkSizeWidget.setVisible(value)
+
+    def toggletitleEdit(self, value):
+        if value:
+            self.metadataTitleBox.setChecked(False)
+
+    def togglefileFusionBox(self, value):
+        if value:
+            GUI.metadataTitleBox.setChecked(False)
+            GUI.metadataTitleBox.setEnabled(False)
+        else:
+            GUI.metadataTitleBox.setEnabled(True)
+
+    def togglemetadataTitleBox(self, value):
+        if value:
+            GUI.titleEdit.setText(None)
+
+    def editSourceMetadata(self, item):
+        if item.icon().isNull():
+            sname = item.text()
+            if os.path.isdir(sname):
+                sname = os.path.join(sname, "ComicInfo.xml")
+            self.selectFileMetaEditor(sname)
 
     def changeGamma(self, value):
         valueRaw = int(5 * round(float(value) / 5))
@@ -1158,6 +1184,8 @@ class KCCGUI(KCC_ui.Ui_mainWindow):
                              'Label': 'Rmk2'},
             "reMarkable Paper Pro": {'PVOptions': False, 'ForceExpert': False, 'DefaultFormat': 3, 'DefaultUpscale': True, 'ForceColor': True,
                              'Label': 'RmkPP'},
+            "reMarkable Paper Pro Move": {'PVOptions': False, 'ForceExpert': False, 'DefaultFormat': 3, 'DefaultUpscale': True, 'ForceColor': True,
+                             'Label': 'RmkPPMove'},
             "Other": {'PVOptions': False, 'ForceExpert': True, 'DefaultFormat': 1, 'DefaultUpscale': False, 'ForceColor': False,
                       'Label': 'OTHER'},
         }
@@ -1180,6 +1208,7 @@ class KCCGUI(KCC_ui.Ui_mainWindow):
             "reMarkable 1",
             "reMarkable 2",
             "reMarkable Paper Pro",
+            "reMarkable Paper Pro Move",
             "Separator",
             "Other",
             "Separator",
@@ -1253,6 +1282,10 @@ class KCCGUI(KCC_ui.Ui_mainWindow):
         GUI.chunkSizeCheckBox.stateChanged.connect(self.togglechunkSizeCheckBox)
         GUI.deviceBox.activated.connect(self.changeDevice)
         GUI.formatBox.activated.connect(self.changeFormat)
+        GUI.titleEdit.textChanged.connect(self.toggletitleEdit)
+        GUI.fileFusionBox.stateChanged.connect(self.togglefileFusionBox)
+        GUI.metadataTitleBox.stateChanged.connect(self.togglemetadataTitleBox)
+        GUI.jobList.itemDoubleClicked.connect(self.editSourceMetadata)
         MW.progressBarTick.connect(self.updateProgressbar)
         MW.modeConvert.connect(self.modeConvert)
         MW.addMessage.connect(self.addMessage)
@@ -1341,15 +1374,17 @@ class KCCGUI_MetaEditor(KCC_ui_editor.Ui_editorDialog):
             self.editorWidget.setEnabled(True)
             self.okButton.setEnabled(True)
             self.statusLabel.setText('Separate authors with a comma.')
-        for field in (self.seriesLine, self.volumeLine, self.numberLine):
+        for field in (self.seriesLine, self.volumeLine, self.numberLine, self.titleLine):
             field.setText(self.parser.data[field.objectName().capitalize()[:-4]])
         for field in (self.writerLine, self.pencillerLine, self.inkerLine, self.coloristLine):
             field.setText(', '.join(self.parser.data[field.objectName().capitalize()[:-4] + 's']))
-        if self.seriesLine.text() == '':
-            if file.endswith('.xml'):
-                self.seriesLine.setText(file.split('\\')[-2])
-            else:
-                self.seriesLine.setText(file.split('\\')[-1].split('/')[-1].split('.')[0])
+        for field in (self.seriesLine, self.titleLine):
+            if field.text() == '':
+                path = Path(file)
+                if file.endswith('.xml'):
+                    field.setText(path.parent.name)
+                else:
+                    field.setText(path.stem)
 
     def saveData(self):
         for field in (self.volumeLine, self.numberLine):
@@ -1359,7 +1394,8 @@ class KCCGUI_MetaEditor(KCC_ui_editor.Ui_editorDialog):
                 self.statusLabel.setText(field.objectName().capitalize()[:-4] + ' field must be a number.')
                 break
         else:
-            self.parser.data['Series'] = self.cleanData(self.seriesLine.text())
+            for field in (self.seriesLine, self.titleLine):
+                self.parser.data[field.objectName().capitalize()[:-4]] = self.cleanData(field.text())
             for field in (self.writerLine, self.pencillerLine, self.inkerLine, self.coloristLine):
                 values = self.cleanData(field.text()).split(',')
                 tmpData = []
